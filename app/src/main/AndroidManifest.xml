@@ -5,6 +5,7 @@
           android:versionName="0.4-beta">
 
     <uses-sdk android:minSdkVersion="7"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"

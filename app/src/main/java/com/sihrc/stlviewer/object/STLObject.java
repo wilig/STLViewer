@@ -35,7 +35,6 @@ public class STLObject {
     }
 
     /**
-     * FIXME 'STL format error detection' depends exceptions.
      *
      * @param stlBytes
      * @param context

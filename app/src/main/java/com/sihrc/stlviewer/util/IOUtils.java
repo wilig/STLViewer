@@ -135,4 +135,14 @@ public class IOUtils {
         }
         return result;
     }
+
+    public static String upOneDirectory(String directory){
+        String[] dirs = directory.split("/");
+        StringBuilder stringBuilder = new StringBuilder("");
+
+        for(int i = 0; i < dirs.length - 1; i++)
+            stringBuilder.append(dirs[i]).append('/');
+
+        return stringBuilder.toString();
+    }
 }

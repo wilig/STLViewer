@@ -1,7 +1,9 @@
 package com.sihrc.stlviewer.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -15,8 +17,11 @@ import android.widget.ImageButton;
 import android.widget.ToggleButton;
 
 import com.sihrc.stlviewer.R;
+import com.sihrc.stlviewer.callback.OnClickFile;
 import com.sihrc.stlviewer.renderer.STLRenderer;
 import com.sihrc.stlviewer.view.STLView;
+
+import java.io.File;
 
 public class STLViewActivity extends Activity {
     private STLView stlView;
@@ -73,20 +78,22 @@ public class STLViewActivity extends Activity {
             stlView.onPause();
         }
     }
-//
-//	@Override
-//	public void onClickFileList(File file) {
-//		if (file == null) {
-//			return;
-//		}
-//
-//		SharedPreferences config = getSharedPreferences("PathSetting", Activity.MODE_PRIVATE);
-//		SharedPreferences.Editor configEditor = config.edit();
-//		configEditor.putString("lastPath", file.getParent());
-//		configEditor.commit();
-//
-//		setUpViews(Uri.fromFile(file));
-//	}
+
+    OnClickFile fileClick = new OnClickFile() {
+        @Override
+        public void onClick(File file) {
+            if (file == null) {
+                return;
+            }
+
+            SharedPreferences config = getSharedPreferences("PathSetting", Context.MODE_PRIVATE);
+            SharedPreferences.Editor configEditor = config.edit();
+            configEditor.putString("lastPath", file.getParent());
+            configEditor.apply();
+
+            setUpViews(Uri.fromFile(file));
+        }
+    };
 
     private void setUpViews(Uri uri) {
         setContentView(R.layout.stl);
@@ -104,11 +111,8 @@ public class STLViewActivity extends Activity {
         loadButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-//				FileListDialog fileListDialog = new FileListDialog(STLViewActivity.this, false, "Choose STL file...", ".stl");
-//				fileListDialog.setOnFileListDialogListener(STLViewActivity.this);
-//
-//				SharedPreferences config = getSharedPreferences("PathSetting", Activity.MODE_PRIVATE);
-//				fileListDialog.show(config.getString("lastPath", "/mnt/sdcard/"));
+                SharedPreferences config = getSharedPreferences("PathSetting", Context.MODE_PRIVATE);
+                FileDialogFragment.newInstance(fileClick, config.getString("lastPath", null)).show(getFragmentManager(), "FileDialog");
             }
         });
 
