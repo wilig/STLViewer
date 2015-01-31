@@ -4,12 +4,9 @@ import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.GLU;
 
 import com.sihrc.stlviewer.object.STLObject;
+import com.sihrc.stlviewer.util.GLUtils;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -102,14 +99,14 @@ public class STLRenderer implements Renderer {
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         // draw X-Y field
         if (displayGrids) {
-            drawGrids(gl);
+            GLUtils.drawGrids(gl);
         }
 
         // draw axis
         if (displayAxes) {
             gl.glLineWidth(3f);
             float[] vertexArray = {-100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100, 0, 0, 0, -100, 0, 0, 100};
-            FloatBuffer lineBuffer = getFloatBufferFromArray(vertexArray);
+            FloatBuffer lineBuffer = GLUtils.getFloatBufferFromArray(vertexArray);
             gl.glVertexPointer(3, GL10.GL_FLOAT, 0, lineBuffer);
 
             // X : red
@@ -137,54 +134,4 @@ public class STLRenderer implements Renderer {
         }
     }
 
-    private static void drawGrids(GL10 gl) {
-        List<Float> lineList = new ArrayList<Float>();
-
-        for (int x = -100; x <= 100; x += 5) {
-            lineList.add((float) x);
-            lineList.add(-100f);
-            lineList.add(0f);
-            lineList.add((float) x);
-            lineList.add(100f);
-            lineList.add(0f);
-        }
-        for (int y = -100; y <= 100; y += 5) {
-            lineList.add(-100f);
-            lineList.add((float) y);
-            lineList.add(0f);
-            lineList.add(100f);
-            lineList.add((float) y);
-            lineList.add(0f);
-        }
-
-        FloatBuffer lineBuffer = getFloatBufferFromList(lineList);
-        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, lineBuffer);
-
-        gl.glLineWidth(1f);
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, new float[]{0.5f, 0.5f, 0.5f, 1.0f}, 0);
-        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, new float[]{0.5f, 0.5f, 0.5f, 1.0f}, 0);
-        gl.glDrawArrays(GL10.GL_LINES, 0, lineList.size() / 3);
-    }
-
-    private static FloatBuffer getFloatBufferFromArray(float[] vertexArray) {
-        ByteBuffer vbb = ByteBuffer.allocateDirect(vertexArray.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        FloatBuffer triangleBuffer = vbb.asFloatBuffer();
-        triangleBuffer.put(vertexArray);
-        triangleBuffer.position(0);
-        return triangleBuffer;
-    }
-
-    private static FloatBuffer getFloatBufferFromList(List<Float> vertexList) {
-        ByteBuffer vbb = ByteBuffer.allocateDirect(vertexList.size() * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        FloatBuffer triangleBuffer = vbb.asFloatBuffer();
-        float[] array = new float[vertexList.size()];
-        for (int i = 0; i < vertexList.size(); i++) {
-            array[i] = vertexList.get(i);
-        }
-        triangleBuffer.put(array);
-        triangleBuffer.position(0);
-        return triangleBuffer;
-    }
 }

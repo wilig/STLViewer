@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import com.sihrc.stlviewer.R;
 import com.sihrc.stlviewer.renderer.STLRenderer;
+import com.sihrc.stlviewer.util.IOUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -58,28 +59,26 @@ public class STLObject {
             protected List<Float> doInBackground(byte[]... stlBytes) {
                 List<Float> processResult = null;
                 try {
-                    if (isText(stlBytes[0])) {
+                    if (IOUtils.isText(stlBytes[0])) {
                         processResult = processText(new String(stlBytes[0]));
                     } else {
                         processResult = processBinary(stlBytes[0]);
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
                 if (processResult != null && processResult.size() > 0 && normalList != null && normalList.size() > 0) {
                     return processResult;
                 }
 
-                return new ArrayList<Float>();
+                return new ArrayList<>(0);
             }
 
             List<Float> processText(String stlText) throws Exception {
-                List<Float> vertexList = new ArrayList<Float>();
                 normalList.clear();
-
                 String[] stlLines = stlText.split("\n");
-
                 progressDialog.setMax(stlLines.length);
 
+                List<Float> vertexList = new ArrayList<>();
                 for (int i = 0; i < stlLines.length; i++) {
                     String string = stlLines[i].trim();
                     if (string.startsWith("facet normal ")) {
@@ -110,36 +109,36 @@ public class STLObject {
             }
 
             List<Float> processBinary(byte[] stlBytes) throws Exception {
-                List<Float> vertexList = new ArrayList<Float>();
+                List<Float> vertexList = new ArrayList<>();
                 normalList.clear();
 
-                int vectorSize = getIntWithLittleEndian(stlBytes, 80);
+                int vectorSize = getIntWithLittleEndian(80);
 
                 progressDialog.setMax(vectorSize);
                 for (int i = 0; i < vectorSize; i++) {
-                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50)));
-                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 4)));
-                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 8)));
+                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50)));
+                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 4)));
+                    normalList.add(Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 8)));
 
-                    float x = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 12));
-                    float y = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 16));
-                    float z = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 20));
+                    float x = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 12));
+                    float y = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 16));
+                    float z = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 20));
                     adjustMaxMin(x, y, z);
                     vertexList.add(x);
                     vertexList.add(y);
                     vertexList.add(z);
 
-                    x = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 24));
-                    y = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 28));
-                    z = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 32));
+                    x = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 24));
+                    y = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 28));
+                    z = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 32));
                     adjustMaxMin(x, y, z);
                     vertexList.add(x);
                     vertexList.add(y);
                     vertexList.add(z);
 
-                    x = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 36));
-                    y = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 40));
-                    z = Float.intBitsToFloat(getIntWithLittleEndian(stlBytes, 84 + i * 50 + 44));
+                    x = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 36));
+                    y = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 40));
+                    z = Float.intBitsToFloat(getIntWithLittleEndian(84 + i * 50 + 44));
                     adjustMaxMin(x, y, z);
                     vertexList.add(x);
                     vertexList.add(y);
@@ -163,7 +162,7 @@ public class STLObject {
                     return;
                 }
 
-                float[] vertexArray = listToFloatArray(vertexList);
+                float[] vertexArray = IOUtils.listToFloatArray(vertexList);
                 ByteBuffer vbb = ByteBuffer.allocateDirect(vertexArray.length * 4);
                 vbb.order(ByteOrder.nativeOrder());
                 triangleBuffer = vbb.asFloatBuffer();
@@ -190,7 +189,7 @@ public class STLObject {
         return true;
     }
 
-    private ProgressDialog prepareProgressDialog(Context context) {
+    private static ProgressDialog prepareProgressDialog(Context context) {
         ProgressDialog progressDialog = new ProgressDialog(context);
         progressDialog.setTitle(R.string.stl_load_progress_title);
         progressDialog.setMax(0);
@@ -202,26 +201,6 @@ public class STLObject {
         progressDialog.show();
 
         return progressDialog;
-    }
-
-    /**
-     * checks 'text' in ASCII code
-     *
-     * @param bytes
-     * @return
-     */
-    boolean isText(byte[] bytes) {
-        for (byte b : bytes) {
-            if (b == 0x0a || b == 0x0d || b == 0x09) {
-                // white spaces
-                continue;
-            }
-            if (b < 0x20 || (0xff & b) >= 0x80) {
-                // control codes
-                return false;
-            }
-        }
-        return true;
     }
 
     private void adjustMaxMin(float x, float y, float z) {
@@ -245,16 +224,8 @@ public class STLObject {
         }
     }
 
-    private int getIntWithLittleEndian(byte[] bytes, int offset) {
+    private int getIntWithLittleEndian(int offset) {
         return (0xff & stlBytes[offset]) | ((0xff & stlBytes[offset + 1]) << 8) | ((0xff & stlBytes[offset + 2]) << 16) | ((0xff & stlBytes[offset + 3]) << 24);
-    }
-
-    private float[] listToFloatArray(List<Float> list) {
-        float[] result = new float[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            result[i] = list.get(i);
-        }
-        return result;
     }
 
     public void draw(GL10 gl) {

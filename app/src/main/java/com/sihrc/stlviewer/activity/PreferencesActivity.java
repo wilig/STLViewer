@@ -134,6 +134,6 @@ public class PreferencesActivity extends Activity {
         editor.putBoolean("displayAxes", STLRenderer.displayAxes);
         editor.putBoolean("displayGrids", STLRenderer.displayGrids);
 
-        editor.commit();
+        editor.apply();
     }
 }
